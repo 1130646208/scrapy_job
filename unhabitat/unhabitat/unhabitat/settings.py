@@ -13,8 +13,8 @@ SPIDER_MODULES = ['unhabitat.spiders']
 NEWSPIDER_MODULE = 'unhabitat.spiders'
 FEED_EXPORT_ENCODING = 'utf-8'
 RETRY_HTTP_CODES = [502, 503, 504, 400, 403, 404, 408]
-DOWNLOAD_TIMEOUT = 50  # 超时
-RETRY_TIMES = 5
+DOWNLOAD_TIMEOUT = 66  # 超时
+RETRY_TIMES = 8
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'unhabitat (+http://www.yourdomain.com)'
