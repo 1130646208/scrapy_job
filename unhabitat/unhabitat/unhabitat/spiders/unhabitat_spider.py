@@ -3,7 +3,7 @@ from ..items import UnhabitatItem
 from copy import deepcopy
 import datetime
 import time
-scrapy.Request
+
 
 class UnhabitatSpiderSpider(scrapy.Spider):
     name = 'unhabitat_spider'
@@ -24,7 +24,9 @@ class UnhabitatSpiderSpider(scrapy.Spider):
             item['issueTime'] = self.parse_date_time(raw_issueTime)
             article_detail_url = response.urljoin(news.xpath('./h4/a/@href').extract_first())
             yield scrapy.Request(url=article_detail_url, meta={'item': deepcopy(item)}, callback=self.parse_article_detail)
-        if next_page_query:
+
+        #                                       这里更改要爬取的页数↓
+        if next_page_query and next_page_query.split('=')[1] < '5':
             base_url = response.request.url.split('?')[0]
             yield scrapy.Request(url=base_url+next_page_query, callback=self.parse)
 
