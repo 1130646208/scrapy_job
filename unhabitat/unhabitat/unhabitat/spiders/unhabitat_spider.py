@@ -42,4 +42,5 @@ class UnhabitatSpiderSpider(scrapy.Spider):
         item['detail'] = ''.join(article)
         item['_url'] = response.request.url
         item['abstract'] = item['detail'][0:100] + '...'
+
         return item
