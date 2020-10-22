@@ -14,8 +14,8 @@ class UnhabitatItem(scrapy.Item):
     crawlTime = scrapy.Field()#
     detail = scrapy.Field()#
     issueTime = scrapy.Field()#
-    abstract = scrapy.Field()
-    _url = scrapy.Field()#
+    abstract = scrapy.Field()#
+    url = scrapy.Field()#
     issueAgency = scrapy.Field()#
     category = scrapy.Field()#
 
