@@ -4,7 +4,6 @@ from scrapy_splash import SplashRequest
 from ..items import ScrapysplashnewsItem
 import datetime
 import time
-from copy import deepcopy
 
 
 wto_homepage_script = """
@@ -13,9 +12,12 @@ wto_homepage_script = """
         splash.resource_timeout = 90
         splash.images_enabled = false
         assert(splash:go(args.url))
-        return splash:html()
+        return {html=splash:html(),
+        url=splash:url()
+        }
     end
 """
+
 
 class WtoNewsSpider(scrapy.Spider):
     name = 'wto_news'
@@ -28,26 +30,31 @@ class WtoNewsSpider(scrapy.Spider):
                                 args={'lua_source': wto_homepage_script, 'timeout': 90})
 
     def homepage_parse(self, response):
-        item = ScrapysplashnewsItem()
+
         news_list = response.xpath('//div[@class="centerCol"]//div[@class="row"]')
-        print('*********************', response.request.url)
+
         for news in news_list:
+            item = ScrapysplashnewsItem()
             item['organization'] = 'United Nations'
             item['category'] = ''
             item['crawlTime'] = datetime.date.fromtimestamp(time.time()).strftime('%Y-%m-%d')
             item['title'] = news.xpath('.//h3//text()').extract_first()
             item['issueAgency'] = 'World Trade Organization'
             item['issueTime'] = news.xpath('.//time//text()').extract_first()
-            article_detail_url = news.xpath('.//ul//li//text()').extract_first()
+            article_detail_url = news.xpath('.//ul//li/a/@href').extract_first()
             item['url'] = response.urljoin(article_detail_url)
             item['abstract'] = news.xpath('.//p/text()').extract_first()
+            # yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
+            #                     args={'lua_source': wto_homepage_script, 'timeout': 90},
+            #                     meta={'item': deepcopy(item)})
             yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
                                 args={'lua_source': wto_homepage_script, 'timeout': 90},
-                                meta={'item': deepcopy(item)})
-
+                                meta={'item': item})
 
     def parse_article_detail(self, response):
+        # print('*********************', response.data['url'])
         article_paragraphs = response.xpath('//div[@id="mainContent"]//p//text()').extract()
+        print('************', article_paragraphs)
         article = []
         # if not article_paragraphs:
         #     article_paragraphs = response.xpath('//div[@class="post-content"]//p/text()').extract()
