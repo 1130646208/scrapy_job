@@ -7,8 +7,9 @@ import time
 from copy import deepcopy
 
 
-unitar_homepage_script = """
+wto_homepage_script = """
     function main(splash, args)
+        splash.js_enabled = true
         splash.resource_timeout = 90
         splash.images_enabled = false
         assert(splash:go(args.url))
@@ -16,40 +17,37 @@ unitar_homepage_script = """
     end
 """
 
-class UnitarNewsSpider(scrapy.Spider):
-    name = 'unitar_news'
-    allowed_domains = ['unitar.org']
-
-    # 这个网站就两页....
-    start_urls = ['https://www.unitar.org/about/news-stories/press?title=&created_start=&created_end=&pillars=All&items_per_page=10&page=0',
-                  'https://www.unitar.org/about/news-stories/press?title=&created_start=&created_end=&pillars=All&items_per_page=10&page=1']
+class WtoNewsSpider(scrapy.Spider):
+    name = 'wto_news'
+    allowed_domains = ['wto.org']
+    start_urls = ['https://www.wto.org/english/news_e/news20_e/news20_e.htm']
 
     def start_requests(self):
         for url in self.start_urls:
             yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
-                                args={'lua_source': unitar_homepage_script, 'timeout': 90})
+                                args={'lua_source': wto_homepage_script, 'timeout': 90})
 
     def homepage_parse(self, response):
         item = ScrapysplashnewsItem()
-        news_list = response.xpath('//div[@class="item-new views-row"]')
-
+        news_list = response.xpath('//div[@class="centerCol"]//div[@class="row"]')
+        print('*********************', response.request.url)
         for news in news_list:
             item['organization'] = 'United Nations'
             item['category'] = ''
             item['crawlTime'] = datetime.date.fromtimestamp(time.time()).strftime('%Y-%m-%d')
-            item['title'] = news.xpath('.//div[@class="views-field views-field-title"]/span/a/text()').extract_first()
-            item['issueAgency'] = 'United Nations Institute for Training and Research'
-            item['issueTime'] = news.xpath('.//div[@class="views-field views-field-created"]/span/text()').extract_first()
-
-            article_detail_url = news.xpath('.//div[@class="views-field views-field-title"]/span/a/@href').extract_first()
+            item['title'] = news.xpath('.//h3//text()').extract_first()
+            item['issueAgency'] = 'World Trade Organization'
+            item['issueTime'] = news.xpath('.//time//text()').extract_first()
+            article_detail_url = news.xpath('.//ul//li//text()').extract_first()
             item['url'] = response.urljoin(article_detail_url)
-            item['abstract'] = news.xpath('.//div[@class="views-field views-field-field-summary"]/div/text()').extract_first()
-            # yield item
+            item['abstract'] = news.xpath('.//p/text()').extract_first()
             yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
-                                args={'lua_source': unitar_homepage_script, 'timeout': 90},
+                                args={'lua_source': wto_homepage_script, 'timeout': 90},
                                 meta={'item': deepcopy(item)})
+
+
     def parse_article_detail(self, response):
-        article_paragraphs = response.xpath('//div[@class="field--item"]//p//text()').extract()
+        article_paragraphs = response.xpath('//div[@id="mainContent"]//p//text()').extract()
         article = []
         # if not article_paragraphs:
         #     article_paragraphs = response.xpath('//div[@class="post-content"]//p/text()').extract()
@@ -60,4 +58,3 @@ class UnitarNewsSpider(scrapy.Spider):
         item = response.meta['item']
         item['detail'] = ''.join(article)
         yield item
-
