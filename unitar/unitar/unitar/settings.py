@@ -1,4 +1,4 @@
-# Scrapy settings for fao project
+# Scrapy settings for unitar project
 #
 # For simplicity, this file contains only settings considered important or
 # commonly used. You can find more settings consulting the documentation:
@@ -7,10 +7,10 @@
 #     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
-BOT_NAME = 'fao'
+BOT_NAME = 'unitar'
 
-SPIDER_MODULES = ['fao.spiders']
-NEWSPIDER_MODULE = 'fao.spiders'
+SPIDER_MODULES = ['unitar.spiders']
+NEWSPIDER_MODULE = 'unitar.spiders'
 FEED_EXPORT_ENCODING = 'utf-8'
 RETRY_HTTP_CODES = [502, 503, 504, 400, 403, 404, 408]
 DOWNLOAD_TIMEOUT = 90  # 超时
