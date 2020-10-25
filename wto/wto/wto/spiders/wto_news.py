@@ -1,6 +1,5 @@
 import scrapy
 from scrapy_splash import SplashRequest
-
 from ..items import ScrapysplashnewsItem
 import datetime
 import time
@@ -9,7 +8,7 @@ import time
 wto_homepage_script = """
     function main(splash, args)
         splash.js_enabled = true
-        splash.resource_timeout = 90
+        splash.resource_timeout = 450
         splash.images_enabled = false
         assert(splash:go(args.url))
         return {html=splash:html(),
@@ -22,17 +21,16 @@ wto_homepage_script = """
 class WtoNewsSpider(scrapy.Spider):
     name = 'wto_news'
     allowed_domains = ['wto.org']
-    start_urls = ['https://www.wto.org/english/news_e/news20_e/news20_e.htm']
+    start_urls = ['https://www.wto.org/english/news_e/news_e.htm']
 
     def start_requests(self):
         for url in self.start_urls:
             yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
-                                args={'lua_source': wto_homepage_script, 'timeout': 90})
+                                args={'lua_source': wto_homepage_script, 'timeout': 450})
+            # yield scrapy.Request(url=url, callback=self.homepage_parse)
 
     def homepage_parse(self, response):
-
         news_list = response.xpath('//div[@class="centerCol"]//div[@class="row"]')
-
         for news in news_list:
             item = ScrapysplashnewsItem()
             item['organization'] = 'United Nations'
@@ -43,25 +41,25 @@ class WtoNewsSpider(scrapy.Spider):
             item['issueTime'] = news.xpath('.//time//text()').extract_first()
             article_detail_url = news.xpath('.//ul//li/a/@href').extract_first()
             item['url'] = response.urljoin(article_detail_url)
-            item['abstract'] = news.xpath('.//p/text()').extract_first()
-            # yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
-            #                     args={'lua_source': wto_homepage_script, 'timeout': 90},
-            #                     meta={'item': deepcopy(item)})
+            abstract_raw = news.xpath('.//p//text()').extract()
+            item['abstract'] = ''.join([i.replace('\n', '').strip() for i in abstract_raw])
+
             yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
                                 args={'lua_source': wto_homepage_script, 'timeout': 90},
                                 meta={'item': item})
+            # yield item
+            # yield scrapy.Request(item['url'], callback=self.homepage_parse, meta={'item': item})
 
     def parse_article_detail(self, response):
-        # print('*********************', response.data['url'])
-        article_paragraphs = response.xpath('//div[@id="mainContent"]//p//text()').extract()
-        print('************', article_paragraphs)
+        item = response.meta['item']
+        article_paragraphs = response.xpath('//div[@id="mainContent"]//p')
         article = []
-        # if not article_paragraphs:
-        #     article_paragraphs = response.xpath('//div[@class="post-content"]//p/text()').extract()
 
         for paragraph in article_paragraphs:
-            if not paragraph.replace('\n', '').replace(' ', '') == '':
-                article.append(''.join(paragraph) + '\n')
-        item = response.meta['item']
+            p = []
+            for p_text in paragraph.xpath('.//text()').extract():
+                p.append(p_text.replace('\n', '').strip())
+            article.append(''.join(p) + '\n')
+
         item['detail'] = ''.join(article)
         yield item
