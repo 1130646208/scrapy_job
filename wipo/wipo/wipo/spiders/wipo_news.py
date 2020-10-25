@@ -59,16 +59,16 @@ class WipoNewsSpider(scrapy.Spider):
                 abstract = []
                 for i in abstract_raw:
                     abstract.append(i.strip('\n'))
-                item['abstract'] = ''.join(abstract)
+                item['abstract'] = ''.join(abstract)[0:100]
                 # yield SplashRequest(detail_url, callback=self.abstract_parse, endpoint='execute', args={'lua_source': homepage_script, 'timeout': 90},
                 #                     meta={'item': item})
-                # yield scrapy.Request(url=detail_url, callback=self.abstract_parse, meta={'item': item})
+                # yield scrapy.Request(url=detail_url, callback=self.article_parse, meta={'item': item})
                 yield item
 
             # 详情页是文章详情
             else:
-                abstract_raw = response.xpath('//div[@class="content content--article"]//p[@class="lead"]//text()').extract_first()
-                item['abstract'] = abstract_raw
+                raw = response.xpath('//div[@class="content content--article"]//p[@class="lead"]//text()').extract_first()
+                item['abstract'] = raw[0:100]
                 # item['detail'] = ''.join(detail_raw)
                 # for detail in detail_raw:
                 #     ''.join()
@@ -76,6 +76,15 @@ class WipoNewsSpider(scrapy.Spider):
         else:
             # 重定向情况
             pass
+
+    def article_parse(self, response):
+        item = response.meta['item']
+        article_raw = response.xpath('//div[@class="content content--article"]//text()').extract()
+        article = []
+        for i in article_raw:
+            article.append(i)
+        item['detail'] = article
+        yield item
 
     def parse_issueTime_raw(self, issueTime_raw):
 
