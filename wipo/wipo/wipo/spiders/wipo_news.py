@@ -19,9 +19,6 @@ class WipoNewsSpider(scrapy.Spider):
     start_urls = ['https://www.wipo.int/portal/en/news/']
 
     def start_requests(self):
-        # for url in self.start_urls:
-        #     yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
-        #                         args={'lua_source': unicef_homepage_script, 'timeout': 90})
         for i in range(1):
             # yield SplashRequest(self.start_urls[0], callback=self.homepage_parse, endpoint='execute',
             #                     args={'lua_source': homepage_script, 'timeout': 90})
@@ -30,7 +27,6 @@ class WipoNewsSpider(scrapy.Spider):
     def homepage_parse(self, response):
         news = response.xpath('//div[@class="listings listings--news"]//article[@class="listing listing--news"]')
         for single_news in news:
-
             item = ScrapysplashnewsItem()
             item['category'] = ''
             item['crawlTime'] = datetime.date.fromtimestamp(time.time()).strftime('%Y-%m-%d')
@@ -44,7 +40,8 @@ class WipoNewsSpider(scrapy.Spider):
 
             # yield SplashRequest(detail_url, callback=self.abstract_parse, endpoint='execute', args={'lua_source': homepage_script, 'timeout': 90},
             #                     meta={'item': item})
-            yield scrapy.Request(url=detail_url, callback=self.abstract_parse, meta={'item': item})
+            yield item
+            # yield scrapy.Request(url=detail_url, callback=self.abstract_parse, meta={'item': item})
 
     def abstract_parse(self, response):
 

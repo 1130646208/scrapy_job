@@ -31,12 +31,9 @@ class FaoNewsSpider(scrapy.Spider):
             print(page_urls)
 
         for url in page_urls:
-            print('******************', url)
-            yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
-                                args={'lua_source': fao_homepage_script, 'timeout': 90})
-        # for url in self.start_urls:
-        #     yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
-        #                         args={'lua_source': fao_homepage_script, 'timeout': 90})
+            # yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
+            #                     args={'lua_source': fao_homepage_script, 'timeout': 90})
+            yield scrapy.Request(url, callback=self.homepage_parse)
 
     def homepage_parse(self, response):
         item = ScrapysplashnewsItem()
@@ -55,9 +52,7 @@ class FaoNewsSpider(scrapy.Spider):
             item['url'] = article_detail_url
             item['abstract'] = news.xpath('.//div[@class="list-subtitle"]/text()').extract_first()
 
-            yield SplashRequest(article_detail_url, callback=self.parse_article_detail, endpoint='execute',
-                                args={'lua_source': fao_homepage_script, 'timeout': 90},
-                                meta={'item': deepcopy(item)})
+            yield scrapy.Request(article_detail_url, callback=self.parse_article_detail, meta={'item': deepcopy(item)})
 
     def parse_article_detail(self, response):
         article_paragraphs = response.xpath('//div[@class="news-list"]//text()').extract()
@@ -67,7 +62,7 @@ class FaoNewsSpider(scrapy.Spider):
             article.append(''.join(paragraph))
         item = response.meta['item']
         item['detail'] = ''.join(article)
-        return item
+        yield item
 
     def parse_date_time(self, date_raw):
         day_month_year_list = date_raw.split('-')
