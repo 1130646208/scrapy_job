@@ -8,7 +8,7 @@ import time
 wto_homepage_script = """
     function main(splash, args)
         splash.js_enabled = true
-        splash.resource_timeout = 450
+        splash.resource_timeout = 90
         splash.images_enabled = false
         assert(splash:go(args.url))
         return {html=splash:html(),
@@ -26,7 +26,7 @@ class WtoNewsSpider(scrapy.Spider):
     def start_requests(self):
         for url in self.start_urls:
             yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
-                                args={'lua_source': wto_homepage_script, 'timeout': 450})
+                                args={'lua_source': wto_homepage_script, 'timeout': 90})
             # yield scrapy.Request(url=url, callback=self.homepage_parse)
 
     def homepage_parse(self, response):
@@ -44,9 +44,7 @@ class WtoNewsSpider(scrapy.Spider):
             abstract_raw = news.xpath('.//p//text()').extract()
             item['abstract'] = ''.join([i.replace('\n', '').strip() for i in abstract_raw])
 
-            yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
-                                args={'lua_source': wto_homepage_script, 'timeout': 90},
-                                meta={'item': item})
+            yield scrapy.Request(item['url'], callback=self.parse_article_detail, meta={'item': item})
             # yield item
             # yield scrapy.Request(item['url'], callback=self.homepage_parse, meta={'item': item})
 
@@ -62,4 +60,6 @@ class WtoNewsSpider(scrapy.Spider):
             article.append(''.join(p) + '\n')
 
         item['detail'] = ''.join(article)
+        if not item['detail']:
+            item['detail'] = 'it is a file...'
         yield item
