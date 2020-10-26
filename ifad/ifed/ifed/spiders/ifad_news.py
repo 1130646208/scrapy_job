@@ -22,7 +22,7 @@ class IfadNewsSpider(scrapy.Spider):
     name = 'ifad_news'
     allowed_domains = ['ifad.org']
     start_urls = ['https://www.ifad.org/en/web/latest/news?mode=search&page=1']
-    page_limit = 1  # 共113页
+    page_limit = 3  # 共113页
 
     def start_requests(self):
         page_urls = []
@@ -42,7 +42,7 @@ class IfadNewsSpider(scrapy.Spider):
             item['organization'] = 'United Nations'
             item['category'] = ''
             item['crawlTime'] = datetime.date.fromtimestamp(time.time()).strftime('%Y-%m-%d')
-            item['title'] = news.xpath('.//p[@class="event-title ellipsis"]/text()').extract_first().strip(' ')
+            item['title'] = news.xpath('.//p[@class="event-title ellipsis"]//text()').extract()[1].strip()
             item['issueAgency'] = 'International Fund for Agricultural Development'
             issueTime_raw = news.xpath('.//div[@class="event-date"]//text()').extract()
             item['issueTime'] = self.parse_issueTime_raw(issueTime_raw)
@@ -59,12 +59,16 @@ class IfadNewsSpider(scrapy.Spider):
 
     def parse_article_detail(self, response):
         item = response.meta['item']
-        article_paragraphs = response.xpath('//div[@class="main-content generic-container row-fluid"]//p//text()').extract()
+        article_paragraphs = response.xpath('//div[@class="main-content generic-container row-fluid"]//p')
         article = []
         for paragraph in article_paragraphs:
-            temp = paragraph.replace('\n', '')
-            article.append(temp + '\n')
+            p_text = paragraph.xpath('.//text()').extract()
+            p = []
+            for t in p_text:
+                p.append(t.replace('\n', '').strip())
+            article.append(''.join(p) + '\n')
         item['detail'] = ''.join(article)
+
         item['abstract'] = ''.join(article)[0:150] + '...'
         yield item
 

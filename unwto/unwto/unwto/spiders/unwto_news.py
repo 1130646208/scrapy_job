@@ -54,22 +54,6 @@ class UnwtoNewsSpider(scrapy.Spider):
             yield scrapy.Request(url=item['url'], callback=self.parse_article_detail, meta={'item': item})
             # yield item
 
-    # def parse_article_detail(self, response):
-    #     item = response.meta['item']
-    #     article_paragraphs = response.xpath('//div[@class="col-md-8 offset-md-1"]//p//text()').extract()
-    #     abstract = response.xpath('//div[@class="col-md-8 offset-md-1"]//p[@class="p_brief"]/text()').extract_first()
-    #     if abstract:
-    #         article = []
-    #         item['abstract'] = abstract.replace('\n', '').strip(' ')
-    #         for paragraph in article_paragraphs:
-    #             temp = paragraph.replace('\n', '')
-    #             article.append(temp + '\n')
-    #         item['detail'] = ''.join(article)
-    #         yield item
-    #     else:
-    #         item['abstract'] = 'page removed...'
-    #         item['detail'] = 'page removed...'
-
     def parse_article_detail(self, response):
         item = response.meta['item']
         abstract = response.xpath('//div[@class="col-md-8 offset-md-1"]//p[@class="p_brief"]/text()').extract_first()
