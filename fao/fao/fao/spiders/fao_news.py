@@ -65,7 +65,7 @@ class FaoNewsSpider(scrapy.Spider):
             for t in p_text:
                 p.append(t.strip('\n').replace('\n', '').strip())
             article.append(''.join(p) + '\n')
-        item['detail'] = ''.join(article)
+        item['detail'] = ''.join(article).lstrip('\n')
 
         if item['detail'].replace('\n', '') == '':
             article_paragraphs = response.xpath('//div[@class="news-list"]//div[@class="news-item"]//div')
@@ -73,7 +73,8 @@ class FaoNewsSpider(scrapy.Spider):
             p = []
             for t in p_text:
                 p.append(t.strip('\n').replace('\n', '').strip())
-            item['detail'] = ''.join(p) + '\n'
+            _detail = ''.join(p) + '\n'
+            item['detail'] = _detail.lstrip('\n')
         yield item
 
     def parse_date_time(self, date_raw):
