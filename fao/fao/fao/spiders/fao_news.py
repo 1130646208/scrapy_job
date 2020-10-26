@@ -55,13 +55,25 @@ class FaoNewsSpider(scrapy.Spider):
             yield scrapy.Request(article_detail_url, callback=self.parse_article_detail, meta={'item': deepcopy(item)})
 
     def parse_article_detail(self, response):
-        article_paragraphs = response.xpath('//div[@class="news-list"]//text()').extract()
+        item = response.meta['item']
+        article_paragraphs = response.xpath('//div[@class="news-list"]//div[@class="news-item"]//p')
         article = []
 
         for paragraph in article_paragraphs:
-            article.append(''.join(paragraph))
-        item = response.meta['item']
+            p_text = paragraph.xpath('.//text()').extract()
+            p = []
+            for t in p_text:
+                p.append(t.strip('\n').replace('\n', '').strip())
+            article.append(''.join(p) + '\n')
         item['detail'] = ''.join(article)
+
+        if item['detail'].replace('\n', '') == '':
+            article_paragraphs = response.xpath('//div[@class="news-list"]//div[@class="news-item"]//div')
+            p_text = article_paragraphs.xpath('.//text()').extract()
+            p = []
+            for t in p_text:
+                p.append(t.strip('\n').replace('\n', '').strip())
+            item['detail'] = ''.join(p) + '\n'
         yield item
 
     def parse_date_time(self, date_raw):
