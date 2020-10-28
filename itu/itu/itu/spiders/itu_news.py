@@ -33,6 +33,7 @@ class ItuNewsSpider(scrapy.Spider):
         for i in range(len(title_list)):
             item = ScrapysplashnewsItem()
             item['organization'] = 'United Nations'
+            item['issueAgency'] = 'International Telecommunication Union'
             item['category'] = '新闻稿、公报和面向媒体的新闻提要'
             item['crawlTime'] = datetime.date.fromtimestamp(time.time()).strftime('%Y-%m-%d')
             item['title'] = title_list.pop(0).strip()
@@ -59,8 +60,8 @@ class ItuNewsSpider(scrapy.Spider):
                     if p_clean:
                         p.append(p_clean)
                 article.append(''.join(p) + '\n')
-            item['detail'] = ''.join(article).lstrip('\n')
-
+            item['detail'] = ''.join(article).lstrip('\n').replace('\n\n', '\n')
+            item['abstract'] = item['detail'][0:100] + '...'
         else:
             article = []
             article_paragraphs = response.xpath(
@@ -72,6 +73,7 @@ class ItuNewsSpider(scrapy.Spider):
                     p.append(t.strip('\n').replace('\n', '').strip())
                 article.append(''.join(p) + '\n')
             item['detail'] = ''.join(article)
+            item['abstract'] = item['detail'][0:100] + '...'
 
         yield item
 
