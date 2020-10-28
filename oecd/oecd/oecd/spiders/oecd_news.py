@@ -7,7 +7,7 @@ import time
 
 oecd_homepage_script = """
 function main(splash, args)
-    splash.resource_timeout = 15
+    splash.resource_timeout = 90
     splash.images_enabled = false
     assert(splash:go(args.url))
     return splash:html()
@@ -17,7 +17,7 @@ end
 
 oecd_article_script = """
 function main(splash, args)
-    splash.resource_timeout = 15
+    splash.resource_timeout = 90
     splash.images_enabled = false
     splash:go(args.url)
     return {
@@ -31,7 +31,7 @@ class OecdNewsSpider(scrapy.Spider):
     name = 'oecd_news'
     allowed_domains = ['oecd.org']
     start_urls = ['https://www.oecd.org/newsroom/publicationsdocuments/bydate/{}']
-    page_limit = 5
+    page_limit = 2
 
     def start_requests(self):
         for page in range(1, self.page_limit+1):
