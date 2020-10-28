@@ -32,7 +32,7 @@ class OecdNewsSpider(scrapy.Spider):
     allowed_domains = ['oecd.org']
     start_urls = ['https://www.oecd.org/newsroom/publicationsdocuments/bydate/{}']
     page_limit = 2
-
+    # 一共222页
     def start_requests(self):
         for page in range(1, self.page_limit+1):
             # yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
