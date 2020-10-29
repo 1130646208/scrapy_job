@@ -66,16 +66,17 @@ class OecdNewsSpider(scrapy.Spider):
 
     def parse_article_detail(self, response):
         item = response.meta['item']
-        article_paragraphs = response.xpath('//div[@id="webEditContent"]//p')
-        article = []
-        for paragraph in article_paragraphs:
-            p_text = paragraph.xpath('.//text()').extract()
-            p = []
-            for t in p_text:
-                p_clean = t.replace('\r', '').replace('\n', '').replace('\xa0', '')
-                if p_clean:
-                    p.append(p_clean)
-            temp = ''.join(p)
-            article.append(temp + '\n')
-        item['detail'] = ''.join(article).lstrip('\n')
+        article_units = response.xpath('//div[@id="webEditContent"]/*[contains(child, iframe)]')
+        article_detail = ''
+
+        for article_unit in article_units:
+            article_unit_parts = article_unit.xpath('.//text()').extract()
+            if ''.join(article_unit_parts).strip() == '':
+                continue
+            for article_unit_part in article_unit_parts:
+                sentence = article_unit_part.strip()
+                if sentence:
+                    article_detail += sentence + ' '
+            article_detail += '\n'
+        item['detail'] = article_detail
         yield item
