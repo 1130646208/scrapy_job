@@ -61,7 +61,7 @@ class ApecNewsSpider(scrapy.Spider):
 
     def parse_article_detail(self, response):
         item = response.meta['item']
-        article_units = response.xpath('//body/main[@id="mainContent"]/section/div/div/div[3]//p')
+        article_units = response.xpath('//body/main[@id="mainContent"]/section/div/div/div//p')
 
         article_detail = ''
         for article_unit in article_units:
