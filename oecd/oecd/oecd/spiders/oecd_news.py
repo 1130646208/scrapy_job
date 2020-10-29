@@ -7,7 +7,7 @@ import time
 
 oecd_homepage_script = """
 function main(splash, args)
-    splash.resource_timeout = 15
+    splash.resource_timeout = 90
     splash.images_enabled = false
     assert(splash:go(args.url))
     return splash:html()
@@ -17,7 +17,7 @@ end
 
 oecd_article_script = """
 function main(splash, args)
-    splash.resource_timeout = 15
+    splash.resource_timeout = 90
     splash.images_enabled = false
     splash:go(args.url)
     return {
@@ -31,8 +31,9 @@ class OecdNewsSpider(scrapy.Spider):
     name = 'oecd_news'
     allowed_domains = ['oecd.org']
     start_urls = ['https://www.oecd.org/newsroom/publicationsdocuments/bydate/{}']
-    page_limit = 5
+    page_limit = 2
 
+    # 共222页
     def start_requests(self):
         for page in range(1, self.page_limit+1):
             # yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
@@ -63,9 +64,6 @@ class OecdNewsSpider(scrapy.Spider):
             yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
                                 args={'lua_source': oecd_article_script, 'timeout': 90},
                                 meta={'item': item})
-
-
-
 
     def parse_article_detail(self, response):
         item = response.meta['item']
