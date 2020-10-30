@@ -29,14 +29,19 @@ end
 class AdbNewsSpider(scrapy.Spider):
     name = 'adb_news'
     allowed_domains = ['adb.org']
-    start_urls = ['https://www.adb.org/news/releases']
-    page_limit = 3
-    # page_limit 最大479
+    start_urls = ['https://www.adb.org/news/releases', 'https://www.adb.org/news/country-offices', 'https://www.adb.org/news/articles']
     page_urls = []
-    def start_requests(self):
-        self.page_urls.append(self.start_urls[0])
-        for i in range(1, self.page_limit+1):
-            self.page_urls.append('https://www.adb.org/news/releases?page={}'.format(i))
+    # 爬取的时候改 which, 0对应start_requests第一个网址,1对应start_requests第二个网址...
+    # 然后将page_limit改到需要的大小
+    which = 2
+    page_limit1 = 3  # 最大479
+    page_limit2 = 3  # 最大244
+    page_limit3 = 3  # 最大55
+    page_limit = [page_limit1, page_limit2, page_limit3]
+    def start_requests(self, which_to_crawl=which):
+        self.page_urls.append(self.start_urls[which_to_crawl])
+        for i in range(1, self.page_limit[which_to_crawl]+1):
+            self.page_urls.append(self.start_urls[which_to_crawl] + '?page={}'.format(i))
         for url in self.page_urls:
             yield SplashRequest(url, callback=self.homepage_parse, endpoint='execute',
                                 args={'lua_source': homepage_script, 'timeout': 90})
@@ -48,15 +53,21 @@ class AdbNewsSpider(scrapy.Spider):
         for article in articles:
             item = ScrapysplashnewsItem()
             item['organization'] = 'Asian Development Bank'
-            item['category'] = ''
+            item['category'] = response.data['url'].split('/')[-1].split('?')[0]
             item['crawlTime'] = datetime.date.fromtimestamp(time.time()).strftime('%Y-%m-%d')
             item['title'] = article.xpath('.//h3/text()').extract_first()
             item['issueAgency'] = 'ADB'
             issueTime_raw = article.xpath('.//span[@class="date-display-single"]/text()').extract_first()
             item['issueTime'] = self.parse_issueTime(issueTime_raw)
-            item['abstract'] = article.xpath('.//div[2]/div/text()').extract_first()
-            article_detail_url = article.xpath('.//span/a/@href').extract_first()
-            item['url'] = response.urljoin(article_detail_url)
+
+            if self.which == 2:
+                item['abstract'] = article.xpath('.//div/text()').extract_first()
+                article_detail_url = article.xpath('./a/@href').extract_first()
+                item['url'] = response.urljoin(article_detail_url)
+            else:
+                item['abstract'] = article.xpath('.//div[2]/div/text()').extract_first()
+                article_detail_url = article.xpath('.//span/a/@href').extract_first()
+                item['url'] = response.urljoin(article_detail_url)
             yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
                                 args={'lua_source': adb_article_script, 'timeout': 90},
                                 meta={'item': item})
