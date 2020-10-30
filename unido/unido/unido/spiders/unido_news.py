@@ -84,7 +84,10 @@ class UnidoNewsSpider(scrapy.Spider):
             item['issueTime'] = issueTime_raw.group(1)
         else:
             issueTime_raw = re.search(r'(\d+\s\w+)', item['detail'])
-            item['issueTime'] = issueTime_raw.group(1) + ' 2020'
+            if issueTime_raw:
+                item['issueTime'] = issueTime_raw.group(1) + ' 2020'
+            else:
+                item['issueTime'] = ''
         yield item
 
     def parse_abstract(self, abstract_raw):
