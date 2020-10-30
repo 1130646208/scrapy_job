@@ -21,7 +21,7 @@ class AiibNewsSpider(scrapy.Spider):
     allowed_domains = ['aiib.org']
     start_urls = ['https://www.aiib.org/en/news-events/media-center/news/index.html']
     # 此网站所有内容全在一个页面(html控制显示隐藏.)
-
+    # 在homepage_parse前两行可以修改要爬取的年份2020---2015
     def start_requests(self):
 
         for url in self.start_urls:
@@ -42,7 +42,7 @@ class AiibNewsSpider(scrapy.Spider):
                 item['title'] = article.xpath('.//div[contains(@class, "col-xs-12")]//h3/text()').extract_first()
                 item['issueAgency'] = 'AIIB'
                 issueTime_raw = article.xpath('.//div[contains(@class, "col-xs-12")]//p[@class="Rbt-MD text-14 grey"]/text()').extract_first()
-                item['issueTime'] = issueTime_raw
+                item['issueTime'] = self.parse_issueTime(issueTime_raw)
                 item['abstract'] = article.xpath('.//div[contains(@class, "col-xs-12")]//p[contains(@class,"copy-desc Rbts-RG text-15 grey Copy-Ellipsis")]/text()').extract_first()
                 article_detail_url = article.xpath('./@href').extract_first()
                 item['url'] = response.urljoin(article_detail_url)
@@ -69,3 +69,28 @@ class AiibNewsSpider(scrapy.Spider):
             article_detail += '\n'
         item['detail'] = article_detail
         yield item
+
+    def parse_issueTime(self, issueTime_raw):
+        mapping = {
+            'Jan': 'January',
+            'Feb': 'February',
+            'Mar': 'March',
+            'Apr': 'April',
+            'May': 'May',
+            'Jun': 'June',
+            'Jul': 'July',
+            'Aug': 'August',
+            'Sep': 'September',
+            'Oct': 'October',
+            'Nov': 'November',
+            'Dec': 'December',
+        }
+        month_day = issueTime_raw.split(',')[-2:][0].strip()
+        year = issueTime_raw.split(',')[-2:][1].strip()
+        month = month_day.split(' ')[0].strip('.')
+        day = month_day.split(' ')[1]
+
+        if month in mapping.keys():
+            month = mapping[month]
+        return ' '.join([day, month, year])
+
