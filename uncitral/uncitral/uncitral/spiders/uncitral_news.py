@@ -60,10 +60,10 @@ class UncitralNewsSpider(scrapy.Spider):
             article_detail_url = article.xpath('.//h3/a/@href').extract_first()
             item['url'] = response.urljoin(article_detail_url)
             # yield item
-            # yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
-            #                     args={'lua_source': article_script, 'timeout': 90},
-            #                     meta={'item': item})
-            yield scrapy.Request(url=item['url'], callback=self.parse_article_detail, meta={'item': item})
+            yield SplashRequest(item['url'], callback=self.parse_article_detail, endpoint='execute',
+                                args={'lua_source': article_script, 'timeout': 90},
+                                meta={'item': item})
+            # yield scrapy.Request(url=item['url'], callback=self.parse_article_detail, meta={'item': item})
 
     def parse_article_detail(self, response):
         item = response.meta['item']
